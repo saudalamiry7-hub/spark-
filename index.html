@@ -89,7 +89,7 @@ footer button{background:none;color:var(--coil);font-size:11px;padding:0;text-de
   ⚡ <b>انتقال</b>: عملة رُصدت نابضًا خلال آخر 24 ساعة وبدأت تشتعل الآن.<br>
   🧲 <b>عدوى</b>: قطاع انطلق قائده، وإخوته لم يتحركوا بعد.<br>
   مستوى الإبطال: السعر الذي إن كُسر تكون الفكرة قد فشلت. المسح لا يعطي أوامر، القرار لك.<br>
-  <button id="cgBtn">تحديث بيانات القيمة السوقية والقطاعات</button> · <button id="rstBtn">مسح ذاكرة المسوح</button>
+  <button id="cgBtn">تحديث بيانات القيمة السوقية والقطاعات</button> · <button id="rstBtn">مسح ذاكرة المسوح</button> · <button id="diagBtn">فحص الاتصال</button>
 </footer>
 
 <script>
@@ -104,6 +104,7 @@ const CFG={
 const SPOT=['https://api.binance.com','https://data-api.binance.vision'];
 const FUT='https://fapi.binance.com';
 const CG='https://api.coingecko.com/api/v3';
+const PAP='https://api.coinpaprika.com/v1';
 // الأكثر تخصصًا أولًا، لأن أول قطاع للعملة هو قطاعها الأساسي
 const SECTORS=[
   ['artificial-intelligence','ذكاء اصطناعي'],['depin','DePIN'],['real-world-assets-rwa','RWA'],
@@ -137,7 +138,9 @@ async function getJSON(url,ms=15000){
     if(!r.ok){const e=new Error('HTTP '+r.status);e.status=r.status;throw e}
     return await Promise.race([r.json(),timeout]);
   }catch(e){
-    if(e instanceof TypeError&&!e.status)throw new Error('تعذر الاتصال بمصدر البيانات');
+    let host='';try{host=new URL(url).hostname}catch(_){}
+    if(e instanceof TypeError&&!e.status){const n=new Error('تعذر الاتصال بـ '+host);n.net=true;throw n}
+    if(e.status&&!/[a-z]{3,}\./.test(e.message))e.message+=' من '+host;
     throw e;
   }finally{clearTimeout(t)}
 }
@@ -162,7 +165,7 @@ function K(raw){const o=[],h=[],l=[],c=[],q=[],tq=[],t=[];
 async function cg(path){
   for(let i=0;i<4;i++){
     try{return await getJSON(CG+path,20000)}
-    catch(e){if(e.status===429){setStatus(`CoinGecko مزدحم، انتظار ${15*(i+1)} ث…`);await sleep(15000*(i+1));continue}throw e}
+    catch(e){if((e.status===429||e.net)&&i<2){setStatus(`CoinGecko مزدحم، انتظار ${10*(i+1)} ث…`);await sleep(10000*(i+1));continue}throw e}
   }throw new Error('CoinGecko لا يستجيب');
 }
 async function loadCG(force){
@@ -191,8 +194,25 @@ async function loadCG(force){
         arr.forEach(x=>{(sec[x.id]=sec[x.id]||[]).push(label)})}catch(e){}
       await sleep(2200);
     }
-    const d={t:Date.now(),coins,memes,sec};ls.set('spark_cg',d);return d;
-  }catch(e){if(c)return c;throw e}
+    const d={t:Date.now(),coins,memes,sec,src:'cg'};ls.set('spark_cg',d);return d;
+  }catch(e){
+    console.warn('CoinGecko failed',e);
+    if(c)return c;
+    return await loadPaprika(e);
+  }
+}
+// مصدر بديل عند حجب CoinGecko: طلب واحد يعطي القيم السوقية (بدون تصنيف ميم/قطاعات)
+async function loadPaprika(cgErr){
+  setStatus('CoinGecko لا يستجيب — التحويل للمصدر البديل…',0.3);
+  let arr;
+  try{arr=await getJSON(PAP+'/tickers?quotes=USD',30000)}
+  catch(e){throw new Error(`${cgErr.message} + ${e.message}`)}
+  const coins={};
+  for(const x of arr){const q=x.quotes&&x.quotes.USD;if(!q||!q.market_cap||!q.price)continue;
+    const s=String(x.symbol).toUpperCase();
+    if(!coins[s]||q.market_cap>coins[s][1])coins[s]=[x.id,q.market_cap,q.price]}
+  // يُخزَّن ساعتين فقط ليعيد محاولة CoinGecko لاحقًا
+  const d={t:Date.now()-CFG.CG_TTL+2*3600e3,coins,memes:[],sec:{},src:'pap'};ls.set('spark_cg',d);return d;
 }
 
 /* ===================== بصمة الانفجار (يومي، مخزّن) ===================== */
@@ -387,7 +407,7 @@ async function scan(){
     const resMap={};res.forEach(x=>{resMap[x.sym]=x});
     last={res,shown,secs,resMap,uniN:uni.length,selN:sel.length};
     render(last);
-    setStatus(`${new Date().toLocaleTimeString('ar-AE',{hour:'2-digit',minute:'2-digit'})} · ${uni.length} عملة · تحليل ${sel.length} · ${((Date.now()-t0)/1000).toFixed(0)} ث`,1);
+    setStatus(`${new Date().toLocaleTimeString('ar-AE',{hour:'2-digit',minute:'2-digit'})} · ${uni.length} عملة · تحليل ${sel.length} · ${((Date.now()-t0)/1000).toFixed(0)} ث${cgd.src==='pap'?' · مصدر بديل (بدون فرز القطاعات)':''}`,1);
     if(alarm&&monTimer)beep();
   }catch(e){
     console.error(e);
@@ -484,7 +504,17 @@ setInterval(()=>{const el=$('#nx');if(!nextAt||busy){el.textContent='';return}
 
 $('#scanBtn').onclick=scan;
 $('#monBtn').onclick=toggleMon;
-$('#cgBtn').onclick=async()=>{if(busy)return;busy=true;try{await loadCG(true);setStatus('تم تحديث البيانات',0)}catch(e){setStatus('تعذر التحديث')}busy=false};
+$('#diagBtn').onclick=async()=>{
+  if(busy)return;busy=true;
+  const T=[['Binance',SPOT[0]+'/api/v3/ping'],['Binance بديل',SPOT[1]+'/api/v3/ping'],['Binance عقود',FUT+'/fapi/v1/ping'],
+           ['CoinGecko',CG+'/ping'],['CoinPaprika',PAP+'/global']];
+  $('#st').textContent='جارٍ فحص المصادر…';
+  const r=await Promise.all(T.map(async([n,u])=>{const t=Date.now();
+    try{await getJSON(u,10000);return `✅ ${n} ${Date.now()-t}ms`}catch(e){return `❌ ${n}: ${e.message}`}}));
+  const c=ls.get('spark_cg');
+  r.push(c?`بيانات القيمة السوقية مخزّنة (${c.src==='pap'?'المصدر البديل':'CoinGecko'})`:'لا توجد بيانات قيمة سوقية مخزّنة بعد');
+  $('#st').innerHTML=r.join('<br>');busy=false};
+$('#cgBtn').onclick=async()=>{if(busy)return;busy=true;try{await loadCG(true);setStatus('تم تحديث البيانات',0)}catch(e){setStatus('تعذر التحديث: '+e.message)}busy=false};
 $('#rstBtn').onclick=()=>{['spark_last','spark_coil'].forEach(ls.del);setStatus('تم مسح ذاكرة المسوح')};
 </script>
 </body>
