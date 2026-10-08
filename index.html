@@ -41,7 +41,19 @@ section{margin-top:18px}
 .sh p{font-size:11px;color:var(--mut);margin-inline-start:auto}
 .empty{color:var(--mut);font-size:13px;padding:14px;border:1px dashed var(--line);border-radius:12px;text-align:center}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px;position:relative;overflow:hidden}
-.card.ign{border-inline-start:3px solid var(--fire)}
+.card.brk{border-inline-start:3px solid var(--fire)}
+.card.swp{border-inline-start:3px solid var(--vio)}
+.card.rt{border-inline-start:3px solid var(--good)}
+.plan{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px;padding-top:8px;border-top:1px solid var(--line);font-size:12px}
+.plan div{display:flex;flex-direction:column;gap:2px}.plan i{font-style:normal;font-size:10.5px;color:var(--mut)}
+.plan div:first-child .num{color:var(--fire2);font-weight:700}
+.warn{margin-top:8px;font-size:12px;color:var(--bad);font-weight:600}
+.ok{color:var(--good)}.bd{color:var(--bad)}
+.jr{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;overflow-x:auto}
+.jr table{width:100%;border-collapse:collapse;font-size:11.5px;white-space:nowrap}
+.jr th{color:var(--mut);font-weight:400;font-size:10.5px;padding:3px 4px;text-align:center}
+.jr td{padding:4px;text-align:center;border-top:1px solid var(--line)}.jr td:first-child{text-align:start}
+.jl{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:11.5px;color:var(--mut)}
 .card.coil{border-inline-start:3px solid var(--coil)}
 .card.trans{border-color:var(--fire2);box-shadow:0 0 0 1px var(--fire2),0 6px 26px #ffb02e22}
 .r1{display:flex;align-items:center;gap:6px}
@@ -84,12 +96,14 @@ footer button{background:none;color:var(--coil);font-size:11px;padding:0;text-de
 </main>
 
 <footer>
-  🔥 <b>اشتعال</b>: انفجار حجم وشراء هجومي عند قمة النطاق أو فوقها، قبل أن تقطع العملة مسافة كبيرة.<br>
-  🌀 <b>نابض</b>: تقلب مضغوط ونطاق ضيق وحجم يتصاعد بصمت.<br>
-  ⚡ <b>انتقال</b>: عملة رُصدت نابضًا خلال آخر 24 ساعة وبدأت تشتعل الآن.<br>
-  🧲 <b>عدوى</b>: قطاع انطلق قائده، وإخوته لم يتحركوا بعد.<br>
+  🎯 <b>كسر مبكر</b>: انفجار حجم على 15د يكسر نطاقًا محليًا ضيقًا (6 ساعات)، والسعر لم يبتعد عن المستوى أكثر من 4%.<br>
+  🪤 <b>اصطياد سيولة</b>: السعر كسر قاعًا واضحًا ليضرب أوامر الوقف ثم استرده بحجم وشراء هجومي. الإبطال تحت ذيل الكسر مباشرة.<br>
+  🔁 <b>إعادة اختبار</b>: عملة كسرت سابقًا وصعدت، ثم رجعت لمستوى الكسر بحجم هادئ وصمدت فوقه.<br>
+  🌀 <b>نابض</b>: تقلب مضغوط وحجم يتصاعد بصمت. ليس دخولًا، بل قائمة مراقبة حتى يظهر الزناد.<br>
+  ⛔ <b>فاتت</b>: تحركت أكثر من اللازم أو يظهر عليها توزيع (ذيول علوية بحجم عالٍ). لا تطاردها.<br>
+  <b>لا تشترِ فوق</b>: سقف الدخول. إذا فتحت البطاقة متأخرًا والسعر فوقه، الصفقة فاتت.<br>
   مستوى الإبطال: السعر الذي إن كُسر تكون الفكرة قد فشلت. المسح لا يعطي أوامر، القرار لك.<br>
-  <button id="cgBtn">تحديث بيانات القيمة السوقية والقطاعات</button> · <button id="rstBtn">مسح ذاكرة المسوح</button> · <button id="diagBtn">فحص الاتصال</button>
+  <button id="cgBtn">تحديث بيانات القيمة السوقية والقطاعات</button> · <button id="rstBtn">مسح ذاكرة المسوح</button> · <button id="jBtn">تصفير سجل الأداء</button> · <button id="diagBtn">فحص الاتصال</button>
 </footer>
 
 <script>
@@ -97,9 +111,9 @@ footer button{background:none;color:var(--coil);font-size:11px;padding:0;text-de
 /* ===================== إعدادات ===================== */
 const CFG={
   MCAP_MIN:25e6, MCAP_MAX:3e9, MIN_VOL24:1.5e6,
-  STAGE2_MAX:80, CONC:8, MONITOR_MS:180000,
+  STAGE2_MAX:90, CONC:8, MONITOR_MS:180000,
   CG_TTL:12*3600e3, DNA_TTL:12*3600e3, COIL_MEM:24*3600e3,
-  CHASE_RUN:0.25, CHASE_24H:0.40, SHOW_MIN:50
+  EXT_MAX:0.04, CHASE_24H:0.30, SHOW_MIN:50, JOURNAL_DAYS:7
 };
 const SPOT=['https://api.binance.com','https://data-api.binance.vision'];
 const FUT='https://fapi.binance.com';
@@ -232,75 +246,129 @@ function bbwSeries(c,p=20){const out=[];
 
 function analyze(u,A,H,dna,ctx){
   const now=Date.now(),price=A.c[A.n-1],n=H.n,m=A.n;
-  // --- 1 ساعة: حجم نسبي حسب ساعة اليوم
+  // ===== 1 ساعة: السياق الكبير =====
   const same=i=>{const a=[];for(let j=1;j<=13;j++){const k=i-24*j;if(k>=0)a.push(H.q[k])}return median(a)};
   const hb=same(n-2);let hrv=hb?H.q[n-2]/hb:0;
   const fh=(now-H.t[n-1])/3600e3;
   if(fh>=0.33){const hb2=same(n-1);if(hb2)hrv=Math.max(hrv,H.q[n-1]/fh/hb2)}
-  // --- النطاق 72 ساعة (يستثني آخر 3 ساعات)
-  const rh=H.h.slice(n-75,n-3),rl=H.l.slice(n-75,n-3);
-  const rH=Math.max(...rh),rL=Math.min(...rl),rangePct=rH/rL-1;
+  const rH=Math.max(...H.h.slice(n-75,n-3)),rL=Math.min(...H.l.slice(n-75,n-3)),rangePct=rH/rL-1;
   const pos=clamp((price-rL)/(rH-rL||1),0,1.5);
-  // --- الضغط: نسبة عرض بولنجر الحالية بين قيم 14 يوم
   const bw=bbwSeries(H.c);const cur=bw[bw.length-1];const hist=bw.slice(-300);
   const bbPct=hist.filter(x=>x<=cur).length/hist.length;
-  // --- اتجاه الحجم والامتصاص
   const v24=sum(H.q.slice(n-25,n-1))/24,v7=sum(H.q.slice(Math.max(0,n-193),n-25))/Math.max(1,Math.min(168,n-25));
   const volTrend=v7?v24/v7:1;
   const ch24=price/H.c[n-25]-1;
   const absorb=clamp((volTrend-1)/1.5)*clamp(1-Math.abs(ch24)/0.08);
   let atr=0;for(let i=n-15;i<n-1;i++)atr+=(H.h[i]-H.l[i])/H.c[i];atr/=14;
-  // --- 15 دقيقة: تسارع الحجم والشراء الهجومي
-  const base=median(A.q.slice(0,m-3));
-  const f15=(now-A.t[m-1])/900e3;
-  const curProj=f15>=0.33?A.q[m-1]/f15:0;
-  const accel=base?Math.max(A.q[m-2],curProj)/base:0;
-  const tq=sum(A.tq.slice(m-3)),qq=sum(A.q.slice(m-3));const taker=qq?tq/qq:0.5;
-  const ch15=price/A.o[m-1]-1;
-  const breakout=price>rH,nearHigh=price>=rH*0.98;
-  // --- الطزاجة: أول شمعة اشتعال في آخر 6 ساعات
-  let ig=-1;for(let i=m-24;i<m;i++){if(base&&A.q[i]>3*base&&A.c[i]>A.o[i]){ig=i;break}}
-  let run,age=null,igLow;
-  if(ig>=0){run=price/A.o[ig]-1;age=(now-A.t[ig])/60000;igLow=A.l[ig]}
-  else{run=price/Math.min(...A.l.slice(m-8))-1}
-  const rs=ch24-ctx.b24;
-  const dnaS=clamp(dna/4);
-  const fund=ctx.fund[u.sym];
+  const ext7=price/Math.min(...H.l.slice(n-168))-1;          // كم ارتفعت عن قاع 7 أيام
+  // أقرب مقاومة حقيقية فوق السعر: قمة متأرجحة على الساعة خلال 7 أيام
+  const nextRes=p=>{let r=Infinity;for(let i=Math.max(3,n-168);i<n-4;i++){const h=H.h[i];
+    if(h>p*1.004&&h<r&&h>=Math.max(...H.h.slice(i-3,i+4)))r=h}return r};
 
-  // --- المرحلة
-  const chase=run>CFG.CHASE_RUN||u.ch24>CFG.CHASE_24H||price/rL-1>0.5;
-  const ignGate=!chase&&(accel>=3||hrv>=3)&&taker>=0.55&&nearHigh&&ch15>-0.005;
-  const coilGate=!chase&&!ignGate&&bbPct<=0.25&&rangePct<=0.18&&volTrend>=1.15;
+  // ===== 15 دقيقة: لحظة الانطلاق =====
+  const base=median(A.q.slice(m-97,m-4));
+  const f15=clamp((now-A.t[m-1])/900e3,0.01,1);
+  const rv=i=>!base?0:(i===m-1?A.q[i]/Math.max(f15,0.25):A.q[i])/base;   // الشمعة الجارية تُسقَط على 15د كاملة
+  let a15=0;for(let i=m-22;i<m-2;i++)a15+=(A.h[i]-A.l[i])/A.c[i];a15/=20;
+  const tk=(i0,i1)=>{const q=sum(A.q.slice(i0,i1)),t=sum(A.tq.slice(i0,i1));return q?t/q:0.5};
+  const wick=i=>{const r=A.h[i]-A.l[i];return r>0?(A.h[i]-Math.max(A.o[i],A.c[i]))/r:0};
+  const rng=(a,b)=>{const o=[];for(let i=a;i<b;i++)o.push(i);return o};
+  const taker=tk(m-3,m);
+  // توزيع: شمعتان من آخر 3 بحجم عالٍ وذيل علوي طويل = بائع كبير يفرغ في الصعود
+  const distrib=[m-3,m-2,m-1].filter(i=>rv(i)>=2&&wick(i)>=0.5).length>=2;
+  const rs=ch24-ctx.b24,dnaS=clamp(dna/4),fund=ctx.fund[u.sym];
+  const fundS=fund==null?0:fund<=0.0001?5:fund>0.0005?-5:2;
+  const ceilAt=(lvlCap,t1,inv)=>Math.min(lvlCap,(t1+1.5*inv)/2.5);
+  const rrS=(rr,w)=>rr>=3?w:rr>=2?w*0.65:rr>=1.5?w*0.3:0;
+  const roomTo=p=>{const R=nextRes(p);return isFinite(R)?{t1:R,sky:false}:{t1:p*1.10,sky:true}};
+  const late=u.ch24>CFG.CHASE_24H||ext7>0.45;
 
-  // --- درجة الاشتعال
-  const fr=run<=0.05?15:run<=0.12?10:run<=0.2?5:2;
-  let ignS=clamp(Math.log(Math.max(accel,1))/Math.log(10))*30
-    +clamp(Math.log(Math.max(hrv,1))/Math.log(8))*10
-    +clamp((taker-0.5)/0.2)*20
-    +(breakout?15:nearHigh?8:0)
-    +fr-(age!=null&&age>240?3:0)
-    +dnaS*5+(rs>0?5:0)
-    +(fund==null?0:fund<=0.0001?5:fund>0.0005?-5:2);
-  // --- درجة النابض
+  // ===== A) كسر مبكر لنطاق محلي بانفجار حجم =====
+  let brk=null,lateBrk=null;
+  for(let T=m-4;T<m;T++){
+    if(rv(T)<3||A.c[T]<=A.o[T])continue;
+    const mH=Math.max(...A.h.slice(T-24,T)),mL=Math.min(...A.l.slice(T-24,T)),width=mH/mL-1;
+    if(Math.max(...A.h.slice(T,m))<=mH||price<mH*0.997)continue;      // لم يكسر أو عاد تحت المستوى
+    if(width>0.08)continue;                                             // ليس نطاقًا بل اتجاه قائم
+    const preRun=mH/Math.min(...A.l.slice(T-48,T))-1;
+    const ext=price/mH-1,fromL=price/mL-1;
+    const vMax=Math.max(...rng(T,m).map(rv)),t=tk(T,m);
+    if(ext>CFG.EXT_MAX||fromL>0.10||preRun>0.12){lateBrk={ext:fromL,level:mH};break}
+    if(t<0.55)break;
+    const inval=Math.max(A.l[T],(mH+mL)/2)*0.997;
+    if(price<=inval)break;
+    const {t1,sky}=roomTo(price),risk=price/inval-1,room=t1/price-1,rr=room/risk;
+    let s=clamp(Math.log(vMax)/Math.log(10))*22+clamp((t-0.5)/0.2)*15
+      +(ext<=0.01?20:ext<=0.02?15:ext<=0.03?9:4)+rrS(rr,15)+clamp((0.08-width)/0.06)*8
+      +(price>rH?6:room>=0.05?4:0)+clamp(Math.log(Math.max(hrv,1))/Math.log(6))*4
+      +dnaS*5+(rs>0?5:0)+fundS;
+    if(room<0.02)s-=15;
+    brk={s,T,level:mH,mL,width,ext,vMax,t,inval,t1,sky,rr,room,age:(now-A.t[T])/60000,ceil:ceilAt(mH*(1+CFG.EXT_MAX),t1,inval)};
+    break;
+  }
+
+  // ===== B) اصطياد سيولة: كسر كاذب لقاع ثم استرداده بحجم =====
+  let swp=null;
+  const loc12=Math.min(...A.l.slice(m-52,m-6));
+  for(const [S,lbl,w] of [[rL,'قاع 3 أيام',10],[loc12,'قاع 12 ساعة',6]]){
+    let k=-1,lo=Infinity;for(let i=m-6;i<m;i++){if(A.l[i]<S*0.998&&A.l[i]<lo){lo=A.l[i];k=i}}
+    if(k<0||price<=S*1.002)continue;
+    const depth=S/lo-1;if(depth>0.06)continue;                         // أعمق من ذلك = انهيار لا اصطياد
+    const vMax=Math.max(...rng(k,m).map(rv)),t=tk(k,m);
+    if(vMax<2.5||t<0.5)continue;
+    if(A.c[m-1]<A.o[m-1]&&price<A.c[m-2])continue;                     // الزخم لم ينقلب بعد
+    const ext=price/lo-1;if(ext>0.045)continue;
+    const inval=lo*0.996,{t1,sky}=roomTo(price),risk=price/inval-1,room=t1/price-1,rr=room/risk;
+    let s=clamp(Math.log(vMax)/Math.log(8))*20+clamp((t-0.48)/0.2)*15
+      +(ext<=0.015?20:ext<=0.03?12:5)+rrS(rr,20)+w+(depth>=0.003&&depth<=0.03?5:2)
+      +dnaS*5+(fund!=null&&fund<0?5:0);
+    if(room<0.02)s-=15;
+    swp={s,level:S,lbl,lo,depth,ext,vMax,t,inval,t1,sky,rr,room,age:(now-A.t[k])/60000,ceil:ceilAt(lo*1.045,t1,inval)};
+    break;
+  }
+
+  // ===== C) إعادة اختبار: كسرت سابقًا، رجعت للمستوى بهدوء وصمدت =====
+  let rt=null;
+  for(let B=m-48;B<=m-5;B++){
+    if(rv(B)<3||A.c[B]<=A.o[B])continue;
+    const L=Math.max(...A.h.slice(B-24,B));if(A.c[B]<=L)continue;
+    const pk=Math.max(...A.h.slice(B,m));if(pk/L-1<0.04)continue;
+    const pkI=B+A.h.slice(B,m).indexOf(pk);if(m-1-pkI<2)continue;
+    if(Math.min(...A.c.slice(B+1,m))<L*0.985)continue;                 // انكسر المستوى = فشل
+    if(price<L*0.99||price>L*1.025)continue;
+    const pbV=median(rng(pkI+1,m).map(rv));if(pbV>1.3)continue;        // الرجوع بحجم عالٍ = بيع حقيقي
+    const tn=tk(m-2,m);if(tn<0.5&&A.c[m-1]<A.o[m-1])continue;
+    const lowSince=Math.min(...A.l.slice(pkI,m));
+    const inval=Math.min(lowSince,L*(1-Math.max(0.012,1.5*a15)))*0.997;
+    const t1=pk,risk=price/inval-1,room=t1/price-1,rr=room/risk,d=price/L-1;
+    const s=10*clamp((Math.min(...A.c.slice(B+1,m))/L-0.985)/0.02)+clamp((1.3-pbV)/0.8)*15
+      +(d<=0.01?20:d<=0.018?12:6)+rrS(rr,20)+clamp(Math.log(rv(B))/Math.log(10))*10
+      +clamp((tn-0.45)/0.2)*10+(rs>0?5:0)+dnaS*5+fundS;
+    rt={s,level:L,pk,pbV,ext:d,inval,t1,sky:false,rr,room,t:tn,age:(now-A.t[B])/60000,ceil:ceilAt(L*1.025,t1,inval)};
+  }
+
+  // ===== D) نابض مضغوط (قائمة مراقبة) + تحميل صامت على 15د =====
+  const load15=rng(m-16,m-1).filter(i=>rv(i)>=2&&Math.abs(A.c[i]/A.o[i]-1)<0.5*a15).length;
+  const coilGate=bbPct<=0.25&&rangePct<=0.18&&volTrend>=1.15;
   let coilS=clamp((0.3-bbPct)/0.3)*25+clamp((0.18-rangePct)/0.15)*10
-    +clamp((volTrend-1)/1.5)*20+absorb*10
-    +(pos>=0.7?15:pos>=0.5?8:3)
-    +dnaS*10+(rs>0?5:0)
-    +(fund==null?0:fund<0?5:fund>0.0005?-3:0);
+    +clamp((volTrend-1)/1.5)*20+absorb*8+Math.min(load15,3)*3
+    +(pos>=0.7?12:pos>=0.5?6:2)+dnaS*8+(rs>0?5:0)+(fund==null?0:fund<0?5:fund>0.0005?-3:0);
 
-  const phase=chase?'chase':ignGate?'ign':coilGate?'coil':'none';
-  const score=Math.round(phase==='coil'?coilS:phase==='ign'?ignS:Math.max(ignS,coilS));
+  // ===== القرار =====
+  let phase='none',sig=null;
+  if(late||distrib){phase=lateBrk||u.ch24>CFG.CHASE_24H||ext7>0.45?'late':'none'}
+  else if(brk&&brk.s>=(swp?swp.s:0)){phase='brk';sig=brk}
+  else if(swp){phase='swp';sig=swp}
+  else if(rt){phase='rt';sig=rt}
+  else if(lateBrk){phase='late'}
+  else if(coilGate){phase='coil'}
+  const score=Math.round(sig?Math.min(100,sig.s):coilS);
+  const ext=sig?sig.ext:lateBrk?lateBrk.ext:0;
 
-  // --- المخاطرة
-  let rk=0;if(u.mcap<100e6)rk++;if(atr>0.025)rk++;if(run>0.12)rk++;if(ctx.regime==='r')rk++;if(fund!=null&&fund>0.0005)rk++;
-  // --- الإبطال
-  let inval;
-  if(phase==='coil')inval=rL*0.995;
-  else if(breakout)inval=rH*(1-0.6*atr);
-  else inval=igLow!=null?igLow:Math.min(...A.l.slice(m-4));
-
-  return{...u,price,phase,score,ignS,coilS,accel,hrv,taker,breakout,nearHigh,run,age,rangePct,bbPct,volTrend,absorb,pos,
-    rH,rL,atr,rs,dna,fund,rk,inval,tags:[],oiCh:null};
+  let rk=0;if(u.mcap<100e6)rk++;if(atr>0.025)rk++;if(ext>0.025)rk++;if(ctx.regime==='r')rk++;if(fund!=null&&fund>0.0005)rk++;
+  const inval=sig?sig.inval:rL*0.995;
+  return{...u,price,phase,score,coilS,sig,lateLvl:lateBrk?lateBrk.level:null,distrib,taker,hrv,rangePct,bbPct,volTrend,absorb,load15,pos,
+    rH,rL,atr,rs,dna,fund,rk,inval,ext,ext7,tags:[],oiCh:null};
 }
 
 /* ===================== المسح ===================== */
@@ -335,7 +403,7 @@ async function scan(){
       const mcap=cc[1]*ratio;if(mcap<CFG.MCAP_MIN||mcap>CFG.MCAP_MAX)continue;
       if(memeSet.has(cc[0]))continue;
       const sc=cgd.sec[cc[0]];
-      uni.push({sym:s,base,mcap,q24:q,ch24:+x.priceChangePercent/100,hi24:+x.highPrice,lo24:+x.lowPrice,sector:sc?sc[0]:null});
+      uni.push({sym:s,base,mcap,q24:q,last:p,ch24:+x.priceChangePercent/100,hi24:+x.highPrice,lo24:+x.lowPrice,sector:sc?sc[0]:null});
     }
     // --- الفرز: حجم الساعة الأخيرة
     setStatus(`فرز ${uni.length} عملة…`,0.65);
@@ -348,7 +416,11 @@ async function scan(){
 
     const pick=new Map();
     uni.filter(u=>u.rv1>=1.5).sort((a,b)=>b.rv1-a.rv1).slice(0,35).forEach(u=>pick.set(u.sym,u));
-    uni.filter(u=>u.ch24>-0.06&&u.ch24<0.10).sort((a,b)=>a.tight-b.tight).slice(0,30).forEach(u=>pick.set(u.sym,u));
+    uni.filter(u=>u.ch24>-0.06&&u.ch24<0.10).sort((a,b)=>a.tight-b.tight).slice(0,25).forEach(u=>pick.set(u.sym,u));
+    // مرشحو اصطياد السيولة: قرب قاع اليوم مع نشاط
+    uni.filter(u=>u.ch24>-0.15&&u.rv1>=1.2&&u.last<=u.lo24*1.03).sort((a,b)=>b.rv1-a.rv1).slice(0,15).forEach(u=>pick.set(u.sym,u));
+    // مرشحو إعادة الاختبار: تحركت اليوم ثم تراجعت
+    uni.filter(u=>u.hi24/u.lo24-1>=0.07&&u.last<=u.hi24*0.96&&u.ch24>0&&u.ch24<0.25).sort((a,b)=>b.q24-a.q24).slice(0,15).forEach(u=>pick.set(u.sym,u));
 
     // --- العدوى القطاعية
     const leaders=uni.filter(u=>u.sector&&((u.ch1>=0.05&&u.rv1>=3)||u.ch24>=0.15));
@@ -367,43 +439,47 @@ async function scan(){
     let done=0;
     const res=(await pool(sel,CFG.CONC,async u=>{
       const [a,h]=await Promise.all([
-        spot(`/api/v3/klines?symbol=${u.sym}&interval=15m&limit=97`),
+        spot(`/api/v3/klines?symbol=${u.sym}&interval=15m&limit=145`),
         spot(`/api/v3/klines?symbol=${u.sym}&interval=1h&limit=337`)]);
       let d=0;try{d=await dnaHits(u.sym)}catch(e){}
       done++;setStatus(`تحليل ${done}/${sel.length}…`,0.7+0.25*done/sel.length);
-      if(a.length<60||h.length<200)return null;
+      if(a.length<120||h.length<200)return null;
       return analyze(u,K(a),K(h),d,ctx);
     })).filter(Boolean);
     ls.set('spark_dna',dnaMem);
 
     // --- العقود المفتوحة للمؤهلين فقط
-    const qual=res.filter(x=>(x.phase==='ign'||x.phase==='coil')&&x.score>=CFG.SHOW_MIN-8&&x.fund!=null);
+    const ENTRY=['brk','swp','rt'];
+    const qual=res.filter(x=>(ENTRY.includes(x.phase)||x.phase==='coil')&&x.score>=CFG.SHOW_MIN-8&&x.fund!=null);
     setStatus('قراءة وقود المشتقات…',0.96);
     await pool(qual,6,async x=>{
       const a=await getJSON(`${FUT}/futures/data/openInterestHist?symbol=${x.sym}&period=1h&limit=25`);
       if(!a||a.length<2)return;
       x.oiCh=+a[a.length-1].sumOpenInterest/+a[0].sumOpenInterest-1;
       if(x.phase==='coil'&&x.oiCh>0.08&&x.fund<=0.0001){x.score+=5;x.tags.push(['f','وقود مخزّن'])}
-      if(x.phase==='ign'&&x.oiCh>0.25&&x.fund>0.0003){x.rk++;
+      if(ENTRY.includes(x.phase)&&x.oiCh>0.25&&x.fund>0.0003){x.rk++;
         if(x.taker<0.58){x.score-=8;x.tags.push(['w','تقوده المشتقات'])}else x.tags.push(['w','مشتقات ساخنة'])}
     });
 
     // --- الذاكرة والفروقات
     const now=Date.now(),prev=ls.get('spark_last'),cm=ls.get('spark_coil')||{};
     for(const k in cm)if(now-cm[k]>CFG.COIL_MEM)delete cm[k];
-    const shown=res.filter(x=>(x.phase==='ign'||x.phase==='coil')&&x.score>=CFG.SHOW_MIN);
+    const shown=res.filter(x=>(ENTRY.includes(x.phase)||x.phase==='coil')&&x.score>=CFG.SHOW_MIN);
     let alarm=false;
     for(const x of shown){
       const p=prev&&prev.items[x.sym];
-      if(x.phase==='ign'&&cm[x.sym]){x.trans=true;x.tags.unshift(['t','⚡ انتقل من الضغط'])}
-      if(prev&&!p){x.tags.unshift(['n','🆕 جديد']);if(x.phase==='ign')alarm=true}
+      if(ENTRY.includes(x.phase)&&cm[x.sym]){x.trans=true;x.tags.unshift(['t','⚡ انتقل من الضغط'])}
+      if(prev&&!p){x.tags.unshift(['n','🆕 جديد']);if(ENTRY.includes(x.phase))alarm=true}
       else if(p&&x.score-p.score>=8)x.tags.unshift(['u','⬆ صعدت']);
-      if(x.trans&&!(p&&p.phase==='ign'))alarm=true;
+      if(x.trans&&!(p&&ENTRY.includes(p.phase)))alarm=true;
     }
     shown.filter(x=>x.phase==='coil').forEach(x=>{cm[x.sym]=now});
     const items={};shown.forEach(x=>{items[x.sym]={phase:x.phase,score:x.score}});
     ls.set('spark_last',{t:now,items});ls.set('spark_coil',cm);
 
+    journalAdd(shown.filter(x=>ENTRY.includes(x.phase)));
+    setStatus('تحديث سجل الأداء…',0.98);
+    try{await journalResolve()}catch(e){}
     const resMap={};res.forEach(x=>{resMap[x.sym]=x});
     last={res,shown,secs,resMap,uniN:uni.length,selN:sel.length};
     render(last);
@@ -420,36 +496,88 @@ async function scan(){
   }
 }
 
+/* ===================== سجل الأداء ===================== */
+// كل إشارة دخول تُسجَّل بسعرها وإبطالها وهدفها، ثم تُحسم من شموع 15د الفعلية: هدف أولًا أم إبطال أولًا
+function journalAdd(list){
+  const J=ls.get('spark_j')||[],now=Date.now();
+  for(const x of list){if(!x.sig||J.some(j=>j.s===x.sym&&now-j.t<4*3600e3))continue;
+    J.push({s:x.sym,b:x.base,ph:x.phase,t:now,p:x.price,inv:x.inval,tg:x.sig.t1,sc:x.score,r:null,mfe:0})}
+  ls.set('spark_j',J.filter(j=>now-j.t<CFG.JOURNAL_DAYS*864e5));
+}
+async function journalResolve(){
+  const J=ls.get('spark_j')||[],now=Date.now();
+  const open=J.filter(j=>!j.r&&now-j.t>15*60e3).slice(-30);
+  await pool(open,5,async j=>{
+    const k=await spot(`/api/v3/klines?symbol=${j.s}&interval=15m&startTime=${j.t}&limit=200`);
+    let mx=j.p;
+    for(const c of k){const h=+c[2],l=+c[3];
+      if(l<=j.inv){j.r='L';break}            // في شمعة واحدة لمست الاثنين: نحسبها خسارة (تحفظًا)
+      mx=Math.max(mx,h);if(h>=j.tg){j.r='W';break}}
+    j.mfe=mx/j.p-1;
+    if(!j.r&&now-j.t>24*3600e3)j.r='T';
+  });
+  ls.set('spark_j',J);
+}
+function journalHTML(){
+  const J=ls.get('spark_j')||[];if(!J.length)return '';
+  const names={brk:'كسر مبكر',swp:'اصطياد',rt:'إعادة اختبار'};
+  const row=(lbl,a)=>{const w=a.filter(j=>j.r==='W').length,l=a.filter(j=>j.r==='L').length,t=a.filter(j=>j.r==='T').length,o=a.length-w-l-t;
+    const done=w+l;const wr=done?Math.round(w/done*100)+'%':'—';
+    const mfe=a.filter(j=>j.r).length?median(a.filter(j=>j.r).map(j=>j.mfe+1))-1:null;
+    return `<tr><td>${lbl}</td><td>${N(a.length)}</td><td class="ok">${N(w)}</td><td class="bd">${N(l)}</td><td>${N(t)}</td><td>${N(o)}</td><td><b>${N(wr)}</b></td><td>${mfe!=null?N(pct(mfe)):'—'}</td></tr>`};
+  let h=`<section><div class="sh"><h2>📒 سجل الأداء</h2><span class="c">${N(CFG.JOURNAL_DAYS)} أيام</span><p>هل تصيب الإشارات فعلًا؟</p></div>
+    <div class="jr"><table><tr><th></th><th>إشارات</th><th>هدف</th><th>إبطال</th><th>انتهت</th><th>مفتوحة</th><th>نجاح</th><th>أقصى صعود</th></tr>`;
+  h+=row('الكل',J);for(const k in names){const a=J.filter(j=>j.ph===k);if(a.length)h+=row(names[k],a)}
+  h+=`</table><div class="jl">${J.slice(-8).reverse().map(j=>`<span class="${j.r==='W'?'ok':j.r==='L'?'bd':''}">${j.b} ${j.r==='W'?'✓':j.r==='L'?'✗':j.r==='T'?'⌛':'…'} ${N(pct(j.mfe||0,1))}</span>`).join('')}</div></div></section>`;
+  return h;
+}
+
 /* ===================== العرض ===================== */
 const link=s=>`https://www.binance.com/en/trade/${s.replace(/USDT$/,'')}_USDT?type=spot`;
 function grade(s){return s>=80?['g80','ممتاز']:s>=65?['g65','قوي']:['g50','جيد']}
+const ago=m=>m<1?'الآن':m<60?`منذ ${Math.round(m)}د`:`منذ ${(m/60).toFixed(1)}س`;
 function card(x){
-  const [gc,gt]=grade(x.score);
+  const [gc,gt]=grade(x.score),g=x.sig;
   const risk=x.rk>=3?['risk-h','عالية']:x.rk===2?['risk-m','متوسطة']:['risk-l','منخفضة'];
-  const invD=x.inval/x.price-1;
-  let chips='';
-  if(x.phase==='ign'){
-    chips+=`<span class="chip ${x.accel>=5?'hot':''}">حجم ${N('×'+x.accel.toFixed(1))}</span>`;
-    chips+=`<span class="chip ${x.hrv>=3?'hot':''}">ساعة ${N('×'+x.hrv.toFixed(1))}</span>`;
-    chips+=`<span class="chip ${x.taker>=0.62?'ok':''}">شراء هجومي ${N(Math.round(x.taker*100)+'%')}</span>`;
-    chips+=`<span class="chip ${x.breakout?'ok':'dim'}">${x.breakout?'كسر النطاق ✓':'عند قمة النطاق'}</span>`;
-    chips+=`<span class="chip ${x.run<=0.08?'ok':x.run>0.18?'hot':''}">قطعت ${N(pct(x.run,1))}${x.age!=null?' منذ '+N(Math.round(x.age))+'د':''}</span>`;
+  let chips='',plan='';
+  if(g){
+    if(x.phase==='brk'){
+      chips+=`<span class="chip ${g.vMax>=6?'hot':''}">انفجار حجم 15د ${N('×'+g.vMax.toFixed(1))}</span>`;
+      chips+=`<span class="chip ${g.t>=0.62?'ok':''}">شراء هجومي ${N(Math.round(g.t*100)+'%')}</span>`;
+      chips+=`<span class="chip bl">كسر نطاق 6س عرضه ${N((g.width*100).toFixed(1)+'%')}</span>`;
+      if(x.price>x.rH)chips+=`<span class="chip ok">فوق قمة 3 أيام</span>`;
+    }else if(x.phase==='swp'){
+      chips+=`<span class="chip hot">كسر كاذب لـ${g.lbl} بعمق ${N((g.depth*100).toFixed(1)+'%')}</span>`;
+      chips+=`<span class="chip ${g.vMax>=5?'hot':''}">حجم ${N('×'+g.vMax.toFixed(1))}</span>`;
+      chips+=`<span class="chip ${g.t>=0.58?'ok':''}">شراء هجومي ${N(Math.round(g.t*100)+'%')}</span>`;
+    }else{
+      chips+=`<span class="chip bl">رجعت لمستوى الكسر ${N(fmtP(g.level))}</span>`;
+      chips+=`<span class="chip ${g.pbV<=0.9?'ok':''}">حجم الرجوع ${N('×'+g.pbV.toFixed(2))}</span>`;
+      chips+=`<span class="chip">القمة السابقة ${N(pct(g.pk/x.price-1))}</span>`;
+    }
+    chips+=`<span class="chip ${g.ext<=0.015?'ok':g.ext>0.03?'hot':''}">بعد المستوى ${N(pct(g.ext,1))} · ${ago(g.age)}</span>`;
+    chips+=`<span class="chip ${g.rr>=2?'ok':g.rr<1.5?'hot':''}">عائد/مخاطرة ${N(g.rr.toFixed(1))}</span>`;
+    plan=`<div class="plan">
+      <div><i>لا تشترِ فوق</i>${N(fmtP(g.ceil))}</div>
+      <div><i>الإبطال</i><span class="bd">${N(fmtP(g.inval))} ${N(pct(g.inval/x.price-1))}</span></div>
+      <div><i>${g.sky?'هدف (سماء مفتوحة)':'المقاومة/الهدف'}</i><span class="ok">${N(fmtP(g.t1))} ${N(pct(g.t1/x.price-1))}</span></div></div>`;
   }else{
     chips+=`<span class="chip bl">ضغط ${N(Math.round(x.bbPct*100)+'%')}</span>`;
     chips+=`<span class="chip bl">نطاق 3أيام ${N((x.rangePct*100).toFixed(1)+'%')}</span>`;
     chips+=`<span class="chip ${x.volTrend>=1.5?'ok':''}">حجم ↑ ${N('×'+x.volTrend.toFixed(2))}</span>`;
     chips+=`<span class="chip ${x.pos>=0.7?'ok':''}">موقعها ${N(Math.round(Math.min(x.pos,1)*100)+'%')} من النطاق</span>`;
-    if(x.absorb>0.4)chips+=`<span class="chip ok">امتصاص</span>`;
+    if(x.load15>=2)chips+=`<span class="chip ok">تحميل صامت ${N(x.load15)}</span>`;
+    plan=`<div class="plan"><div><i>الزناد</i>كسر ${N(fmtP(x.rH))} بحجم</div><div><i>الإبطال</i><span class="bd">${N(fmtP(x.inval))}</span></div></div>`;
   }
   if(x.dna>=2)chips+=`<span class="chip hot">بصمة انفجار ${N(x.dna)}</span>`;
   if(x.rs>0.02)chips+=`<span class="chip ok">أقوى من BTC</span>`;
   if(x.fund!=null)chips+=`<span class="chip dim">تمويل ${N((x.fund*100).toFixed(3)+'%')}${x.oiCh!=null?' · OI '+N(pct(x.oiCh,0)):''}</span>`;
+  const over=g&&x.price>g.ceil;
   return `<div class="card ${x.phase}${x.trans?' trans':''}" onclick="window.open('${link(x.sym)}','_blank')">
     <div class="r1"><span class="sym">${x.base}</span>${x.tags.map(t=>`<span class="tag ${t[0]}">${t[1]}</span>`).join('')}
       <div class="score ${gc}"><div class="s">${x.score}</div><div class="g">${gt}</div></div></div>
-    <div class="r2"><span>${N(fmtP(x.price))}</span><span>${N(fmtM(x.mcap))}</span><span>24س ${N(pct(x.ch24))}</span>${x.sector?`<span>${x.sector}</span>`:''}</div>
-    <div class="chips">${chips}</div>
-    <div class="r3"><span>المخاطرة: <b class="${risk[0]}">${risk[1]}</b></span><span>الإبطال ${N(fmtP(x.inval))} ${N('('+pct(invD)+')')}</span></div>
+    <div class="r2"><span>${N(fmtP(x.price))}</span><span>${N(fmtM(x.mcap))}</span><span>24س ${N(pct(x.ch24))}</span>${x.sector?`<span>${x.sector}</span>`:''}<span>مخاطرة <b class="${risk[0]}">${risk[1]}</b></span></div>
+    <div class="chips">${chips}</div>${plan}${over?`<div class="warn">${g.rr<1.5?'المقاومة قريبة جدًا — العائد لا يستحق المخاطرة من هنا':'تجاوزت سقف الدخول — انتظر الرجوع'}</div>`:''}
   </div>`;
 }
 function section(icon,title,list,hint,emptyTxt){
@@ -457,24 +585,31 @@ function section(icon,title,list,hint,emptyTxt){
     ${list.length?list.map(card).join(''):`<div class="empty">${emptyTxt}</div>`}</section>`;
 }
 function render(L){
-  const ign=L.shown.filter(x=>x.phase==='ign').sort((a,b)=>(b.trans-a.trans)||(b.score-a.score));
-  const coil=L.shown.filter(x=>x.phase==='coil').sort((a,b)=>b.score-a.score);
-  let h=section('🔥','اشتعال',ign,'الدخول المبكر','لا اشتعال نظيف الآن. لا شيء أفضل من مطاردة.');
-  h+=section('🌀','نوابض مضغوطة',coil,'راقبها','لا نوابض مؤهلة.');
+  const by=ph=>L.shown.filter(x=>x.phase===ph).sort((a,b)=>(b.trans-a.trans)||(b.score-a.score));
+  const brk=by('brk'),swp=by('swp'),rt=by('rt'),coil=by('coil');
+  let h='';
+  if(!brk.length&&!swp.length&&!rt.length)h+=`<div class="empty" style="margin-top:14px">لا نقطة دخول مبكرة نظيفة الآن. عدم الدخول قرار رابح أيضًا.</div>`;
+  if(brk.length)h+=section('🎯','كسر مبكر',brk,'أول 15د من الانطلاق','');
+  if(swp.length)h+=section('🪤','اصطياد سيولة',swp,'انعكاس من قاع مكسور','');
+  if(rt.length)h+=section('🔁','إعادة اختبار',rt,'فرصة ثانية بمخاطرة صغيرة','');
+  h+=section('🌀','نوابض مضغوطة',coil,'راقب الزناد','لا نوابض مؤهلة.');
   const sk=Object.keys(L.secs).filter(k=>L.secs[k].fol.length);
-  h+=`<section><div class="sh"><h2>🧲 عدوى قطاعية</h2><span class="c">${N(sk.length)}</span><p>الإخوة المتأخرون</p></div>`;
-  if(!sk.length)h+=`<div class="empty">لا قطاع منطلق الآن.</div>`;
-  for(const k of sk){const S=L.secs[k];
-    h+=`<div class="sec"><div class="hd">${k} — القائد: ${S.leaders.slice(0,2).map(l=>`<b>${l.base}</b> ${N(pct(l.ch24,0))}`).join('، ')}</div><div class="fl">`;
-    h+=S.fol.map(f=>{const r=L.resMap[f.sym];const s=r?Math.round(Math.max(r.ignS,r.coilS)):null;
-      return `<a class="${s!=null&&s>=50?'sc':''}" href="${link(f.sym)}" target="_blank">${f.base} ${N(pct(f.ch24,1))}${s!=null?' · '+N(s):''}</a>`}).join('');
-    h+=`</div></div>`}
-  h+=`</section>`;
-  const edge=L.res.filter(x=>x.phase!=='chase'&&!L.shown.includes(x)).sort((a,b)=>b.score-a.score).slice(0,3).filter(x=>x.score>=35);
-  if(edge.length){
-    h+=`<section><div class="sh"><h2>👁 على الحافة</h2><span class="c">${N(edge.length)}</span><p>لم تكتمل شروطها</p></div>`;
-    h+=`<div class="fl">${edge.map(x=>`<a href="${link(x.sym)}" target="_blank">${x.base} ${N(x.score)} · ${N(pct(x.ch24,1))}</a>`).join('')}</div></section>`;
+  if(sk.length){
+    h+=`<section><div class="sh"><h2>🧲 عدوى قطاعية</h2><span class="c">${N(sk.length)}</span><p>الإخوة المتأخرون</p></div>`;
+    for(const k of sk){const S=L.secs[k];
+      h+=`<div class="sec"><div class="hd">${k} — القائد: ${S.leaders.slice(0,2).map(l=>`<b>${l.base}</b> ${N(pct(l.ch24,0))}`).join('، ')}</div><div class="fl">`;
+      h+=S.fol.map(f=>{const r=L.resMap[f.sym];const s=r?r.score:null;
+        return `<a class="${s!=null&&s>=50?'sc':''}" href="${link(f.sym)}" target="_blank">${f.base} ${N(pct(f.ch24,1))}${s!=null?' · '+N(s):''}</a>`}).join('');
+      h+=`</div></div>`}
+    h+=`</section>`;
   }
+  const late=L.res.filter(x=>x.phase==='late'||(x.distrib&&x.ch24>0.05)).sort((a,b)=>b.ch24-a.ch24).slice(0,8);
+  if(late.length){
+    h+=`<section><div class="sh"><h2>⛔ فاتت — لا تطارد</h2><span class="c">${N(late.length)}</span><p>انتظر رجوعها للمستوى</p></div><div class="fl">`;
+    h+=late.map(x=>`<a href="${link(x.sym)}" target="_blank">${x.base} ${N(pct(x.ch24,0))}${x.distrib?' · <span class="bd">توزيع</span>':x.lateLvl?' · ارجع لـ'+N(fmtP(x.lateLvl)):''}</a>`).join('');
+    h+=`</div></section>`;
+  }
+  h+=journalHTML();
   $('#out').innerHTML=h;
 }
 
@@ -504,6 +639,7 @@ setInterval(()=>{const el=$('#nx');if(!nextAt||busy){el.textContent='';return}
 
 $('#scanBtn').onclick=scan;
 $('#monBtn').onclick=toggleMon;
+$('#jBtn').onclick=()=>{if(confirm('تصفير سجل الأداء؟')){ls.del('spark_j');last&&render(last)}};
 $('#diagBtn').onclick=async()=>{
   if(busy)return;busy=true;
   const T=[['Binance',SPOT[0]+'/api/v3/ping'],['Binance بديل',SPOT[1]+'/api/v3/ping'],['Binance عقود',FUT+'/fapi/v1/ping'],
